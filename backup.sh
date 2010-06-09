@@ -18,7 +18,8 @@ else
 	# first backup!
 	BACKUP_DIR="$BACKUPS_DIR/1"
 fi
-rm -fR "$BACKUP_DIR.partial"
-mkdir "$BACKUP_DIR.partial"
-rsync -avz --delete ${MOST_RECENT_BACKUP_DIR:+--link-dest="$MOST_RECENT_BACKUP_DIR"} "$SOURCE_DIR" "$BACKUP_DIR.partial"
-mv "$BACKUP_DIR.partial" "$BACKUP_DIR"
+PARTIAL_DIR="$BACKUP_DIR.partial"
+rm -fR "$PARTIAL_DIR"
+mkdir "$PARTIAL_DIR"
+rsync >>"$PARTIAL_DIR/backup.log" 2>&1 -avz --delete ${MOST_RECENT_BACKUP_DIR:+--link-dest="$MOST_RECENT_BACKUP_DIR/files"} "$SOURCE_DIR" "$PARTIAL_DIR/files"
+mv "$PARTIAL_DIR" "$BACKUP_DIR"
