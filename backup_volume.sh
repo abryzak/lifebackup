@@ -12,7 +12,8 @@ MNT_LOOP="$MNT_BASE/loop"
 CIFS_SERVICE="//192.168.1.100/Backup"
 
 function mount_backup_volumes {
-	mount |grep -F -q " on $MNT_LOOP " && return
+	mkdir -p "$MNT_CIFS" "$MNT_LOOP"
+	mountpoint -q "$MNT_LOOP" && return
 	if [[ ! -f "$MNT_CIFS/backvol1" ]]; then
 		# mount the cifs volume
 		mount -t cifs "$CIFS_SERVICE" "$MNT_CIFS" -o guest || die "unable to mount cifs"
@@ -27,15 +28,15 @@ function mount_backup_volumes {
 }
 
 function umount_backup_volumes {
-	umount "$MNT_LOOP"
-	lvchange -an lifebackup
+	mountpoint -q "$MNT_LOOP" && umount "$MNT_LOOP"
+	[[ -b /dev/lifebackup/lifebackup ]] && lvchange -an lifebackup
 	for VOLUME_FILE in "$MNT_CIFS/backvol"*; do
 		LOOP_DEVICE=$(losetup -a |grep "($VOLUME_FILE)\$") || continue
 		LOOP_DEVICE=${LOOP_DEVICE%%:*}
 		losetup -d "$LOOP_DEVICE"
 	done
 	vgscan >/dev/null
-	umount "$MNT_CIFS"
+	mountpoint -q "$MNT_CIFS" && umount "$MNT_CIFS"
 	return 0
 }
 
@@ -48,4 +49,3 @@ umount)	umount_backup_volumes
 	exit 2
 	;;
 esac
-exit 0
