@@ -21,5 +21,15 @@ fi
 PARTIAL_DIR="$BACKUP_DIR.partial"
 rm -fR "$PARTIAL_DIR"
 mkdir "$PARTIAL_DIR"
+date '+%Y-%m-%d %H:%M:%S' >"$PARTIAL_DIR/date_start.txt"
+echo >>"$PARTIAL_DIR/backup.log" "$(date) - Backup started"
+# TODO: run this command multiple times up to a maximum until it either:
+# - takes less than a threshold amount of time
+# - copies less tan a threshold number of files
+# try to base timing on monotonically increasing clocks that are
+# unaffected by date changes from ntp
 rsync >>"$PARTIAL_DIR/backup.log" 2>&1 -avz --delete ${MOST_RECENT_BACKUP_DIR:+--link-dest="$MOST_RECENT_BACKUP_DIR/files"} "$SOURCE_DIR" "$PARTIAL_DIR/files"
+echo >>"$PARTIAL_DIR/backup.log" "$(date) - Backup finished"
+date '+%Y-%m-%d %H:%M:%S' >"$PARTIAL_DIR/date_end.txt"
+touch "$PARTIAL_DIR/$(date)"
 mv "$PARTIAL_DIR" "$BACKUP_DIR"
